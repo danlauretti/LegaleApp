@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Franchino er Criminale - Mappa Ristoranti</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <h1>Franchino er Criminale</h1>
+                <p class="tagline">Le migliori recensioni di Roma</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Sidebar with restaurant list -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h2>Ristoranti Recensiti</h2>
+                    <div class="filter-section">
+                        <input type="text" id="searchInput" placeholder="Cerca ristorante..." class="search-input">
+                        <select id="categoryFilter" class="category-filter">
+                            <option value="all">Tutte le categorie</option>
+                            <option value="pizza">Pizza</option>
+                            <option value="pasta">Pasta</option>
+                            <option value="street-food">Street Food</option>
+                            <option value="trattoria">Trattoria</option>
+                            <option value="pesce">Pesce</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="restaurant-list" id="restaurantList">
+                    <!-- Restaurant cards will be inserted here by JavaScript -->
+                </div>
+            </aside>
+
+            <!-- Map Container -->
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 Franchino er Criminale Fan Map - Mappa non ufficiale dei ristoranti recensiti</p>
+        </footer>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="restaurants.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
