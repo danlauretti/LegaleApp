@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Reviews Map</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .content {
+            display: flex;
+            height: calc(100vh - 300px);
+            min-height: 600px;
+        }
+
+        #map {
+            flex: 1;
+            min-width: 60%;
+        }
+
+        .sidebar {
+            width: 400px;
+            background: #f8f9fa;
+            overflow-y: auto;
+            border-left: 2px solid #e9ecef;
+        }
+
+        .stats {
+            padding: 20px;
+            background: white;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .stat-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .stat-value {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .restaurant-list {
+            padding: 20px;
+        }
+
+        .restaurant-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .restaurant-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+
+        .restaurant-card h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .stars {
+            color: #ffc107;
+            font-size: 1.2em;
+        }
+
+        .rating-value {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .cuisine-tag {
+            display: inline-block;
+            padding: 5px 15px;
+            background: #e9ecef;
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin: 5px 5px 5px 0;
+            color: #495057;
+        }
+
+        .summary {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e9ecef;
+            color: #6c757d;
+            line-height: 1.6;
+        }
+
+        .youtuber-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            background: #ff0000;
+            color: white;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 968px) {
+            .content {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 400px;
+            }
+
+            #map {
+                min-width: 100%;
+                height: 500px;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ Restaurant Reviews Map</h1>
+            <p>Curated reviews from top food YouTubers</p>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search restaurants...">
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-cuisine="all">All</button>
+                <button class="filter-btn" data-cuisine="Italian">Italian</button>
+                <button class="filter-btn" data-cuisine="Japanese">Japanese</button>
+                <button class="filter-btn" data-cuisine="American">American</button>
+                <button class="filter-btn" data-cuisine="Mexican">Mexican</button>
+                <button class="filter-btn" data-cuisine="Asian">Asian</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div id="map"></div>
+            <div class="sidebar">
+                <div class="stats">
+                    <h3>Overview</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Restaurants</span>
+                        <span class="stat-value" id="totalRestaurants">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Average Rating</span>
+                        <span class="stat-value" id="avgRating">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Reviews</span>
+                        <span class="stat-value" id="totalReviews">0</span>
+                    </div>
+                </div>
+                <div class="restaurant-list" id="restaurantList">
+                    <div class="loading">Loading restaurants...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+// Restaurant data with YouTuber reviews
+const restaurantData = [
+    {
+        id: 1,
+        name: "Mama's Italian Kitchen",
+        cuisine: "Italian",
+        lat: 40.7589,
+        lng: -73.9851,
+        rating: 4.8,
+        youtuber: "The Food Ranger",
+        videoUrl: "https://youtube.com/watch?v=example1",
+        reviewDate: "2024-11-15",
+        summary: "Absolutely incredible homemade pasta! The carbonara was creamy perfection, and the tiramisu transported me straight to Rome. The chef's grandmother's recipes shine through every dish. A must-visit for authentic Italian cuisine in the heart of the city.",
+        highlights: ["Homemade Pasta", "Tiramisu", "Family Recipes", "Authentic Italian"],
+        priceRange: "$$",
+        address: "123 Broadway, New York, NY"
+    },
+    {
+        id: 2,
+        name: "Sakura Sushi House",
+        cuisine: "Japanese",
+        lat: 40.7614,
+        lng: -73.9776,
+        rating: 4.9,
+        youtuber: "The Food Ranger",
+        videoUrl: "https://youtube.com/watch?v=example2",
+        reviewDate: "2024-10-28",
+        summary: "This is hands down the best sushi I've had outside of Tokyo. The fish is incredibly fresh, melts in your mouth. The chef trained in Japan for 15 years and it shows. Try the omakase - it's an experience you won't forget. The presentation is art on a plate.",
+        highlights: ["Fresh Sashimi", "Omakase Experience", "Master Chef", "Beautiful Presentation"],
+        priceRange: "$$$",
+        address: "456 Park Ave, New York, NY"
+    },
+    {
+        id: 3,
+        name: "BBQ King's Smokehouse",
+        cuisine: "American",
+        lat: 40.7489,
+        lng: -73.9680,
+        rating: 4.7,
+        youtuber: "The Food Ranger",
+        videoUrl: "https://youtube.com/watch?v=example3",
+        reviewDate: "2024-12-01",
+        summary: "The brisket here is legendary! Smoked for 16 hours, it's so tender it falls apart. The ribs are perfectly charred with a sweet and tangy sauce. Portions are massive - come hungry! The mac and cheese side is creamy heaven. Real Texas-style BBQ in NYC.",
+        highlights: ["16-Hour Brisket", "Fall-off-bone Ribs", "Homemade Sauces", "Generous Portions"],
+        priceRange: "$$",
+        address: "789 E 34th St, New York, NY"
+    },
+    {
+        id: 4,
+        name: "Taco Fiesta",
+        cuisine: "Mexican",
+        lat: 40.7282,
+        lng: -73.9942,
+        rating: 4.6,
+        youtuber: "The Food Ranger",
+        videoUrl: "https://youtube.com/watch?v=example4",
+        reviewDate: "2024-11-20",
+        summary: "Street-style tacos that taste like they're straight from Mexico City! The al pastor is marinated to perfection with pineapple that caramelizes beautifully. Fresh handmade tortillas, authentic salsas with real kick. Don't sleep on the elote - best corn I've ever had!",
+        highlights: ["Al Pastor Tacos", "Handmade Tortillas", "Authentic Salsas", "Street Corn"],
+        priceRange: "$",
+        address: "234 Lafayette St, New York, NY"
+    },
+    {
+        id: 5,
+        name: "Dragon Wok",
+        cuisine: "Asian",
+        lat: 40.7178,
+        lng: -74.0059,
+        rating: 4.5,
+        youtuber: "The Food Ranger",
+        videoUrl: "https://youtube.com/watch?v=example5",
+        reviewDate: "2024-11-05",
+        summary: "Szechuan cuisine done right! The mapo tofu has that numbing spice that's addictive. Kung pao chicken is loaded with peanuts and has incredible wok hei (breath of the wok). The dan dan noodles are silky smooth with a complex sauce. Spice lovers paradise!",
+        highlights: ["Mapo Tofu", "Wok Hei", "Dan Dan Noodles", "Authentic Szechuan"],
+        priceRange: "$$",
+        address: "567 Canal St, New York, NY"
+    },
+    {
+        id: 6,
+        name: "Bella Napoli",
+        cuisine: "Italian",
+        lat: 40.7308,
+        lng: -73.9973,
+        rating: 4.9,
+        youtuber: "The Food Ranger",
+        videoUrl: "https://youtube.com/watch?v=example6",
+        reviewDate: "2024-10-15",
+        summary: "Wood-fired pizza perfection! The crust is charred and chewy with that perfect leopard spotting. Simple ingredients but the quality shines through - San Marzano tomatoes, buffalo mozzarella, fresh basil. The Margherita is a masterpiece. Feels like eating in Naples.",
+        highlights: ["Wood-fired Pizza", "Neapolitan Style", "Fresh Mozzarella", "Leopard Spotted Crust"],
+        priceRange: "$$",
+        address: "890 Bleecker St, New York, NY"
+    },
+    {
+        id: 7,
+        name: "Ramen Haven",
+        cuisine: "Japanese",
+        lat: 40.7580,
+        lng: -73.9855,
+        rating: 4.7,
+        youtuber: "The Food Ranger",
+        videoUrl: "https://youtube.com/watch?v=example7",
+        reviewDate: "2024-12-10",
+        summary: "Rich, creamy tonkotsu broth that's been simmering for 20 hours. The pork belly chashu melts in your mouth, perfectly soft-boiled egg, and noodles with ideal texture. On a cold day, this bowl of ramen is pure comfort. The garlic oil adds an amazing depth of flavor.",
+        highlights: ["20-Hour Tonkotsu", "Melt-in-mouth Chashu", "Perfect Eggs", "Rich Broth"],
+        priceRange: "$$",
+        address: "345 W 50th St, New York, NY"
+    },
+    {
+        id: 8,
+        name: "The Burger Joint",
+        cuisine: "American",
+        lat: 40.7614,
+        lng: -73.9819,
+        rating: 4.8,
+        youtuber: "The Food Ranger",
+        videoUrl: "https://youtube.com/watch?v=example8",
+        reviewDate: "2024-11-25",
+        summary: "Classic American burger done to perfection. Juicy double patty, melted cheese, crispy bacon, all in a toasted brioche bun. The secret sauce is tangy and addictive. Fries are crispy outside, fluffy inside. Thick milkshakes complete the experience. Pure nostalgia!",
+        highlights: ["Double Patty", "Secret Sauce", "Crispy Fries", "Thick Milkshakes"],
+        priceRange: "$$",
+        address: "678 5th Ave, New York, NY"
+    },
+    {
+        id: 9,
+        name: "Casa Mexicana",
+        cuisine: "Mexican",
+        lat: 40.7489,
+        lng: -73.9680,
+        rating: 4.6,
+        youtuber: "The Food Ranger",
+        videoUrl: "https://youtube.com/watch?v=example9",
+        reviewDate: "2024-10-20",
+        summary: "Enchiladas smothered in mole sauce that takes 3 days to make with 30+ ingredients. The complexity of flavors is incredible - chocolate, chilies, spices all balanced perfectly. Guacamole made tableside with perfectly ripe avocados. Margaritas are dangerously good!",
+        highlights: ["3-Day Mole Sauce", "Tableside Guacamole", "Craft Margaritas", "Authentic Enchiladas"],
+        priceRange: "$$",
+        address: "901 Amsterdam Ave, New York, NY"
+    },
+    {
+        id: 10,
+        name: "Dim Sum Palace",
+        cuisine: "Asian",
+        lat: 40.7155,
+        lng: -74.0095,
+        rating: 4.7,
+        youtuber: "The Food Ranger",
+        videoUrl: "https://youtube.com/watch?v=example10",
+        reviewDate: "2024-12-05",
+        summary: "Traditional dim sum with carts rolling by - the authentic experience! Har gow (shrimp dumplings) are translucent perfection, char siu bao buns are fluffy clouds, and the egg tarts have buttery flaky pastry. Come early for the freshest selection. Tea service is impeccable.",
+        highlights: ["Cart Service", "Har Gow", "Char Siu Bao", "Egg Tarts"],
+        priceRange: "$",
+        address: "432 Mott St, New York, NY"
+    },
+    {
+        id: 11,
+        name: "Trattoria Romano",
+        cuisine: "Italian",
+        lat: 40.7489,
+        lng: -73.9680,
+        rating: 4.8,
+        youtuber: "The Food Ranger",
+        videoUrl: "https://youtube.com/watch?v=example11",
+        reviewDate: "2024-11-10",
+        summary: "Osso buco that falls off the bone, served with creamy risotto Milanese. The gremolata on top adds a fresh citrus kick. Wine selection is extensive with great Italian vintages. Panna cotta for dessert is silky smooth. Feels like dining in a Roman trattoria.",
+        highlights: ["Osso Buco", "Risotto Milanese", "Italian Wines", "Panna Cotta"],
+        priceRange: "$$$",
+        address: "123 Mulberry St, New York, NY"
+    },
+    {
+        id: 12,
+        name: "Koji's Izakaya",
+        cuisine: "Japanese",
+        lat: 40.7282,
+        lng: -73.9942,
+        rating: 4.6,
+        youtuber: "The Food Ranger",
+        videoUrl: "https://youtube.com/watch?v=example12",
+        reviewDate: "2024-12-15",
+        summary: "Authentic Japanese pub experience! Yakitori is grilled to perfection - try the chicken skin, it's crispy and addictive. Takoyaki balls are crispy outside, gooey inside with real octopus chunks. Great sake selection. Perfect spot for late night food and drinks.",
+        highlights: ["Grilled Yakitori", "Crispy Takoyaki", "Sake Selection", "Late Night Spot"],
+        priceRange: "$$",
+        address: "789 E 9th St, New York, NY"
+    }
+];
+
+// Calculate statistics
+function calculateStats() {
+    const total = restaurantData.length;
+    const avgRating = (restaurantData.reduce((sum, r) => sum + r.rating, 0) / total).toFixed(1);
+    const totalReviews = restaurantData.length;
+
+    return {
+        total,
+        avgRating,
+        totalReviews
+    };
+}
+
+// Initialize the map
+let map;
+let markers = [];
+let currentFilter = 'all';
+let searchTerm = '';
+
+// Initialize map when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initMap();
+    displayStats();
+    displayRestaurants(restaurantData);
+    setupEventListeners();
+});
+
+function initMap() {
+    // Initialize map centered on New York City
+    map = L.map('map').setView([40.7489, -73.9680], 12);
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    // Add all restaurant markers
+    addMarkers(restaurantData);
+}
+
+function addMarkers(restaurants) {
+    // Clear existing markers
+    markers.forEach(marker => map.removeLayer(marker));
+    markers = [];
+
+    // Add new markers
+    restaurants.forEach(restaurant => {
+        // Create custom icon based on rating
+        const iconColor = getIconColor(restaurant.rating);
+        const icon = L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="background-color: ${iconColor}; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 14px;">${restaurant.rating}</div>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+
+        // Create marker
+        const marker = L.marker([restaurant.lat, restaurant.lng], { icon: icon })
+            .addTo(map)
+            .bindPopup(createPopupContent(restaurant));
+
+        // Add click event to marker
+        marker.on('click', function() {
+            highlightRestaurant(restaurant.id);
+        });
+
+        markers.push(marker);
+    });
+}
+
+function getIconColor(rating) {
+    if (rating >= 4.8) return '#10b981'; // Green for excellent
+    if (rating >= 4.5) return '#3b82f6'; // Blue for very good
+    if (rating >= 4.0) return '#f59e0b'; // Orange for good
+    return '#ef4444'; // Red for average
+}
+
+function createPopupContent(restaurant) {
+    const stars = '⭐'.repeat(Math.round(restaurant.rating));
+
+    return `
+        <div class="custom-popup" style="min-width: 250px;">
+            <div class="youtuber-badge" style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; background: #ff0000; color: white; border-radius: 15px; font-size: 0.85em; font-weight: 600; margin-bottom: 10px;">
+                📺 ${restaurant.youtuber}
+            </div>
+            <h3 style="color: #667eea; margin-bottom: 10px; font-size: 1.3em;">${restaurant.name}</h3>
+            <div class="popup-rating" style="color: #ffc107; font-size: 1.1em; margin: 5px 0;">
+                ${stars} ${restaurant.rating}
+            </div>
+            <p style="margin: 5px 0; color: #6c757d;"><strong>Cuisine:</strong> ${restaurant.cuisine}</p>
+            <p style="margin: 5px 0; color: #6c757d;"><strong>Price:</strong> ${restaurant.priceRange}</p>
+            <p style="margin: 5px 0; color: #6c757d;"><strong>Location:</strong> ${restaurant.address}</p>
+            <div class="popup-summary" style="margin: 10px 0; color: #495057; line-height: 1.5; max-height: 100px; overflow-y: auto;">
+                <strong>Review:</strong> ${restaurant.summary.substring(0, 150)}...
+            </div>
+            <div style="margin-top: 10px;">
+                <strong style="color: #495057;">Highlights:</strong><br>
+                ${restaurant.highlights.map(h => `<span style="display: inline-block; padding: 3px 10px; background: #e9ecef; border-radius: 10px; font-size: 0.8em; margin: 3px;">${h}</span>`).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function displayStats() {
+    const stats = calculateStats();
+    document.getElementById('totalRestaurants').textContent = stats.total;
+    document.getElementById('avgRating').textContent = stats.avgRating + ' ⭐';
+    document.getElementById('totalReviews').textContent = stats.totalReviews;
+}
+
+function displayRestaurants(restaurants) {
+    const listContainer = document.getElementById('restaurantList');
+
+    if (restaurants.length === 0) {
+        listContainer.innerHTML = '<div class="loading">No restaurants found matching your criteria.</div>';
+        return;
+    }
+
+    listContainer.innerHTML = restaurants.map(restaurant => `
+        <div class="restaurant-card" data-id="${restaurant.id}" onclick="focusOnRestaurant(${restaurant.id})">
+            <div class="youtuber-badge">📺 ${restaurant.youtuber}</div>
+            <h3>${restaurant.name}</h3>
+            <div class="rating">
+                <span class="stars">${'⭐'.repeat(Math.round(restaurant.rating))}</span>
+                <span class="rating-value">${restaurant.rating}/5.0</span>
+            </div>
+            <div>
+                <span class="cuisine-tag">${restaurant.cuisine}</span>
+                <span class="cuisine-tag">${restaurant.priceRange}</span>
+            </div>
+            <div class="summary">
+                <strong>📍</strong> ${restaurant.address}<br>
+                <strong>📅</strong> Reviewed: ${new Date(restaurant.reviewDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}<br><br>
+                ${restaurant.summary}
+            </div>
+            <div style="margin-top: 10px;">
+                ${restaurant.highlights.map(h => `<span class="cuisine-tag">${h}</span>`).join('')}
+            </div>
+        </div>
+    `).join('');
+}
+
+function focusOnRestaurant(id) {
+    const restaurant = restaurantData.find(r => r.id === id);
+    if (restaurant) {
+        // Pan and zoom to restaurant
+        map.setView([restaurant.lat, restaurant.lng], 15);
+
+        // Find and open the marker popup
+        const marker = markers.find(m => {
+            const latlng = m.getLatLng();
+            return latlng.lat === restaurant.lat && latlng.lng === restaurant.lng;
+        });
+
+        if (marker) {
+            marker.openPopup();
+        }
+
+        highlightRestaurant(id);
+    }
+}
+
+function highlightRestaurant(id) {
+    // Remove previous highlights
+    document.querySelectorAll('.restaurant-card').forEach(card => {
+        card.style.borderColor = 'transparent';
+    });
+
+    // Highlight selected card
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (card) {
+        card.style.borderColor = '#667eea';
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+function setupEventListeners() {
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', function(e) {
+        searchTerm = e.target.value.toLowerCase();
+        filterRestaurants();
+    });
+
+    // Filter buttons
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Update active state
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+
+            // Update filter
+            currentFilter = this.getAttribute('data-cuisine');
+            filterRestaurants();
+        });
+    });
+}
+
+function filterRestaurants() {
+    let filtered = restaurantData;
+
+    // Apply cuisine filter
+    if (currentFilter !== 'all') {
+        filtered = filtered.filter(r => r.cuisine === currentFilter);
+    }
+
+    // Apply search filter
+    if (searchTerm) {
+        filtered = filtered.filter(r =>
+            r.name.toLowerCase().includes(searchTerm) ||
+            r.cuisine.toLowerCase().includes(searchTerm) ||
+            r.summary.toLowerCase().includes(searchTerm) ||
+            r.highlights.some(h => h.toLowerCase().includes(searchTerm)) ||
+            r.address.toLowerCase().includes(searchTerm)
+        );
+    }
+
+    // Update display
+    displayRestaurants(filtered);
+    addMarkers(filtered);
+
+    // Update stats for filtered results
+    if (filtered.length > 0) {
+        const avgRating = (filtered.reduce((sum, r) => sum + r.rating, 0) / filtered.length).toFixed(1);
+        document.getElementById('totalRestaurants').textContent = filtered.length;
+        document.getElementById('avgRating').textContent = avgRating + ' ⭐';
+        document.getElementById('totalReviews').textContent = filtered.length;
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Focus search on Ctrl/Cmd + F
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+    }
+});
+    </script>
+</body>
+</html>
