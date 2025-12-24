@@ -1,0 +1,93 @@
+========================================================================
+🍽️  RESTAURANT REVIEWS MAP - HOW TO RUN
+========================================================================
+
+Choose ONE of the methods below to run the application:
+
+------------------------------------------------------------------------
+METHOD 1: Using the Python Script (EASIEST - Auto-opens browser)
+------------------------------------------------------------------------
+
+Simply run:
+    python3 run_restaurant_app.py
+
+Or double-click the file: run_restaurant_app.py
+
+This will:
+✅ Start a local web server on port 8000
+✅ Automatically open your browser to the app
+✅ Show you the URL: http://localhost:8000/restaurant_map.html
+
+------------------------------------------------------------------------
+METHOD 2: Using the Bash Script (Linux/Mac)
+------------------------------------------------------------------------
+
+Run:
+    ./start_server.sh
+
+Or:
+    bash start_server.sh
+
+------------------------------------------------------------------------
+METHOD 3: Manual Python Server
+------------------------------------------------------------------------
+
+1. Open terminal/command prompt
+2. Navigate to this folder:
+    cd /home/user/LegaleApp
+
+3. Start Python server:
+    python3 -m http.server 8000
+
+4. Open your browser and go to:
+    http://localhost:8000/restaurant_map.html
+
+------------------------------------------------------------------------
+METHOD 4: Direct File Opening (May have limited functionality)
+------------------------------------------------------------------------
+
+Simply double-click or open in browser:
+    restaurant_map.html
+
+Note: Some browsers may block certain features when opening files directly.
+Using a local server (Methods 1-3) is recommended.
+
+------------------------------------------------------------------------
+TROUBLESHOOTING
+------------------------------------------------------------------------
+
+Problem: "Port 8000 is already in use"
+Solution: Either:
+  - Close the other application using port 8000, OR
+  - Change PORT to 8080 or another number in run_restaurant_app.py
+
+Problem: Browser doesn't open automatically
+Solution: Manually open your browser and visit:
+  http://localhost:8000/restaurant_map.html
+
+Problem: Python not found
+Solution: Install Python 3 from https://www.python.org/downloads/
+
+Problem: Maps don't load
+Solution: Make sure you have internet connection (needed for map tiles)
+
+------------------------------------------------------------------------
+WHAT YOU'LL SEE
+------------------------------------------------------------------------
+
+✅ Interactive map with restaurant markers
+✅ Sidebar with restaurant listings
+✅ Search bar to find restaurants
+✅ Filter buttons for cuisine types
+✅ Click markers to see detailed reviews
+✅ Click restaurant cards to focus on map
+
+------------------------------------------------------------------------
+STOPPING THE SERVER
+------------------------------------------------------------------------
+
+Press: Ctrl + C (in the terminal window)
+
+========================================================================
+ENJOY YOUR RESTAURANT EXPLORATION! 🎉
+========================================================================
