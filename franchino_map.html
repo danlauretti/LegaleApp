@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mappa Forni e Rosticcerie - Franchino er criminale</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #c92a2a 0%, #e03131 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #c92a2a 0%, #e03131 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .header .youtuber-credit {
+            margin-top: 15px;
+            font-size: 1.1em;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 1em;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #c92a2a;
+            box-shadow: 0 0 0 3px rgba(201, 42, 42, 0.1);
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #c92a2a;
+            background: white;
+            color: #c92a2a;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            background: #c92a2a;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .filter-btn.active {
+            background: #c92a2a;
+            color: white;
+        }
+
+        .content {
+            display: flex;
+            height: calc(100vh - 300px);
+            min-height: 600px;
+        }
+
+        #map {
+            flex: 1;
+            min-width: 60%;
+        }
+
+        .sidebar {
+            width: 450px;
+            background: #f8f9fa;
+            overflow-y: auto;
+            border-left: 2px solid #e9ecef;
+        }
+
+        .stats {
+            padding: 20px;
+            background: white;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .stat-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .stat-value {
+            color: #c92a2a;
+            font-weight: bold;
+        }
+
+        .restaurant-list {
+            padding: 20px;
+        }
+
+        .restaurant-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .restaurant-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+            border-color: #c92a2a;
+        }
+
+        .restaurant-card h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .stars {
+            color: #ffc107;
+            font-size: 1.2em;
+        }
+
+        .rating-value {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .vote-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            background: #c92a2a;
+            color: white;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .cuisine-tag {
+            display: inline-block;
+            padding: 5px 15px;
+            background: #e9ecef;
+            border-radius: 15px;
+            font-size: 0.85em;
+            margin: 5px 5px 5px 0;
+            color: #495057;
+        }
+
+        .summary {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e9ecef;
+            color: #6c757d;
+            line-height: 1.6;
+        }
+
+        .youtuber-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            background: #c92a2a;
+            color: white;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .details-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+
+        .details-section h4 {
+            color: #c92a2a;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .details-section ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .details-section li {
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .details-section li:last-child {
+            border-bottom: none;
+        }
+
+        .spent-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #28a745;
+            color: white;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin: 5px 5px 5px 0;
+        }
+
+        @media (max-width: 968px) {
+            .content {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 400px;
+            }
+
+            #map {
+                min-width: 100%;
+                height: 500px;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍕 Forni e Rosticcerie di Roma</h1>
+            <p>Le migliori recensioni dal cuore di Roma</p>
+            <div class="youtuber-credit">
+                📺 Recensioni by Franchino er criminale
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Cerca forni, rosticcerie, prodotti...">
+            </div>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-cuisine="all">Tutti</button>
+                <button class="filter-btn" data-cuisine="Panificio/Bakery">Panifici</button>
+                <button class="filter-btn" data-cuisine="Rosticceria Romana">Rosticcerie</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div id="map"></div>
+            <div class="sidebar">
+                <div class="stats">
+                    <h3>Panoramica</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Posti Totali</span>
+                        <span class="stat-value" id="totalRestaurants">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Voto Medio</span>
+                        <span class="stat-value" id="avgRating">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Recensioni</span>
+                        <span class="stat-value" id="totalReviews">0</span>
+                    </div>
+                </div>
+                <div class="restaurant-list" id="restaurantList">
+                    <div class="loading">Caricamento forni e rosticcerie...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+// Restaurant data from Franchino er criminale reviews
+const restaurantData = [
+    {
+        id: 1,
+        name: "Forno Ritorno",
+        cuisine: "Panificio/Bakery",
+        lat: 41.8779,
+        lng: 12.4787,
+        rating: 4.5,
+        vote: "9-",
+        youtuber: "Franchino er criminale",
+        videoUrl: "https://youtube.com/@franchinoercriminale",
+        reviewDate: "2024-11-30",
+        summary: "Nuovo forno stile anni 80 a Testaccio che riporta in auge il concetto di panificazione tradizionale romana. I dolci sono eccezionali (voto 9.5) - ciavattone, cornetto romano e veneziana incredibili. Il salato buono ma alcuni prodotti scarichi. Pizza bianca con mortadella €4.50 un po' cara con poca mortadella. I tramezzini ottimi ma prezzi leggermente alti. Un ritorno al passato fatto bene, soprattutto per i dolci artigianali.",
+        highlights: ["Ciavattone alla crema TOP", "Cornetto romano buonissimo", "Veneziana eccezionale", "Sfoglia incredibile", "Tramezzino pane artigianale"],
+        priceRange: "€€",
+        address: "Via Amerigo Vespucci 20, Testaccio, Roma",
+        totalSpent: "€29",
+        itemsReviewed: [
+            "Pizza bianca con mortadella €4.50 - buona ma poca mortadella",
+            "Panino lingua e salsa verde €6.50 - ottimo, ben riempito",
+            "Tramezzino insalata russa €3.50 - 8.5/9 se costasse €3",
+            "Tramezzino insalata di pollo €3.50 - buono ma scarico",
+            "Ciavattone alla crema €3 - buonissimo, tra i migliori",
+            "Cornetto romano €2 - piccolo ma clamoroso",
+            "Veneziana €3 - spettacolare",
+            "Maritozzo con panna €3 - buono"
+        ]
+    },
+    {
+        id: 2,
+        name: "Forno Lana",
+        cuisine: "Panificio/Bakery",
+        lat: 41.8547,
+        lng: 12.5234,
+        rating: 4.5,
+        vote: "9-",
+        youtuber: "Franchino er criminale",
+        videoUrl: "https://youtube.com/@franchinoercriminale",
+        reviewDate: "2024-12-01",
+        summary: "Forno ad Acilia che ha lasciato Franchino super soddisfatto. Le pizzette rosse sono quasi perfette (voto 9), croccanti che si sciolgono in bocca - solo il sugo andrebbe cotto meglio per arrivare al 10. La pizza rossa bassa e scrocchiarella è una HIT assoluta, 'campione del mondo'. Pizza bianca con mortadella abbondante e buona. Dolcetto ricotta e visciole ottimo. Un forno che vale assolutamente il viaggio.",
+        highlights: ["Pizzette rosse da 9", "Pizza rossa HIT campione del mondo", "Pizza bianca mortadella abbondante", "Dolce ricotta visciole", "Impasto croccante"],
+        priceRange: "€€",
+        address: "Via Zottoli 14, Acilia, Roma",
+        totalSpent: "€12.46",
+        itemsReviewed: [
+            "Dolcetto ricotta e visciole - buonissimo, ancora caldo",
+            "Pizza con le patate - buona, 8/10",
+            "Pizza bianca con mortadella - ottima, abbondante",
+            "Pizzette rosse - 9/10, croccanti che si sciolgono",
+            "Pizza rossa scrocchiarella - HIT, quasi 10"
+        ]
+    },
+    {
+        id: 3,
+        name: "Le Gemme di Grano",
+        cuisine: "Panificio/Bakery",
+        lat: 41.8423,
+        lng: 12.5189,
+        rating: 4.3,
+        vote: "8+",
+        youtuber: "Franchino er criminale",
+        videoUrl: "https://youtube.com/@franchinoercriminale",
+        reviewDate: "2024-12-01",
+        summary: "Forno fighetto ad Axa con locale tutto nuovo e stiloso. Fanno anche rosticceria oltre al forno. La montanarina fritta molto buona (8.5), pizza rossa 8.5, pizza bianca buona con olio di qualità. Le pizzette rosse un po' mosce col sugo crudo. Prodotti di buona qualità ma non eccezionali come altri forni. Locale bello, prodotti curati, prezzi in linea. Un buon forno di quartiere che serve bene la zona.",
+        highlights: ["Montanarina fritta buonissima", "Olio di qualità", "Pizza rossa 8.5", "Locale stiloso", "Anche rosticceria"],
+        priceRange: "€€",
+        address: "Via di Macchia Saponara 148, Axa, Roma",
+        totalSpent: "€11",
+        itemsReviewed: [
+            "Pizzette rosse - buone ma mosce, sugo un po' crudo",
+            "Pizzetta con patate - molto buona, ben condita",
+            "Pizza bianca - buona, molto salata (pregio), olio ottimo",
+            "Pizza rossa - 8.5, molto buona",
+            "Montanarina fritta - 8.5, buonissima",
+            "Pangoccioli - buoni"
+        ]
+    },
+    {
+        id: 4,
+        name: "Spiga d'Oro Bakery",
+        cuisine: "Panificio/Bakery",
+        lat: 41.8501,
+        lng: 12.5267,
+        rating: 4.5,
+        vote: "9-",
+        youtuber: "Franchino er criminale",
+        videoUrl: "https://youtube.com/@franchinoercriminale",
+        reviewDate: "2024-12-01",
+        summary: "Forno ad Acilia che fa anche rosticceria con la particolarità di fare le paste GRANDI come una volta, non i mignon moderni. I dolci sono buonissimi (voto 9+) - bigné con zabaglione e diplomatico eccezionali, un ritorno agli anni 90. La focaccia barese con verdure è molto buona (9-), ben condita con olio buono. Pizza bianca ottima ma poca mortadella. Il posto che la gente di Acilia consigliava come HIT e in effetti lo è.",
+        highlights: ["Paste grandi tradizionali", "Bigné zabaglione 9+", "Diplomatico 9+", "Focaccia barese 9-", "Dolci anni 90"],
+        priceRange: "€€",
+        address: "Via Umberto Lilloni 62, Acilia, Roma",
+        totalSpent: "€15.40",
+        itemsReviewed: [
+            "Pizza rossa - 8.5, buona, croccante",
+            "Focaccia barese verdure - 9-, condita divinamente",
+            "Pizza bianca mortadella - 8.5, ottima pizza ma poca mortadella",
+            "Bigné zabaglione - 9+, buonissimo",
+            "Diplomatico - 9+, eccezionale"
+        ]
+    },
+    {
+        id: 5,
+        name: "Romanè al Banco",
+        cuisine: "Rosticceria Romana",
+        lat: 41.8736,
+        lng: 12.4769,
+        rating: 5.0,
+        vote: "10",
+        youtuber: "Franchino er criminale",
+        videoUrl: "https://youtube.com/@franchinoercriminale",
+        reviewDate: "2024-12-15",
+        summary: "Rosticceria aperta da Stefano Callegari (inventore del trapizzino, proprietario di Romanè) vicino a Bonci. VOTO 10/10. La fettina panata è PERFETTA - panatura illegale, frittura perfetta. Crocchetta di patate da 10. Lasagna romana tradizionale buonissima (€18/kg, porzione €4-4.50). Supplì eccezionali. Costine con finocchietto selvatico top. Tutto fatto in maniera tradizionale ma con qualità altissima. Stefano con umiltà dice 'ho aperto la rosticceria e ho ricominciato a imparare'. Il meglio della rosticceria romana.",
+        highlights: ["Fettina panata PERFETTA 10/10", "Crocchetta patate 10/10", "Lasagna romana tradizionale", "Supplì eccezionali", "Costine finocchietto", "Stefano Callegari"],
+        priceRange: "€€",
+        address: "Via Ostiense (vicino Bonci), Roma",
+        totalSpent: "€34 (con €6 Coca-Cole)",
+        itemsReviewed: [
+            "Lasagna romana - eccezionale, €18/kg (porzione €4-4.50)",
+            "Supplì classico €3 - ottimo",
+            "Supplì tortellino €3 - ottimo",
+            "Crocchetta di patate €2.50 - 10/10 PERFETTA",
+            "Fettina panata - 10/10 PERFETTA, panatura illegale",
+            "Costine con finocchietto - top",
+            "Pollo arrosto - eccellente",
+            "Focaccia - ottima"
+        ]
+    }
+];
+
+// Calculate statistics
+function calculateStats() {
+    const total = restaurantData.length;
+    const avgRating = (restaurantData.reduce((sum, r) => sum + r.rating, 0) / total).toFixed(1);
+    const totalReviews = restaurantData.length;
+
+    return {
+        total,
+        avgRating,
+        totalReviews
+    };
+}
+
+// Initialize the map
+let map;
+let markers = [];
+let currentFilter = 'all';
+let searchTerm = '';
+
+// Initialize map when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initMap();
+    displayStats();
+    displayRestaurants(restaurantData);
+    setupEventListeners();
+});
+
+function initMap() {
+    // Initialize map centered on Rome
+    map = L.map('map').setView([41.8719, 12.5124], 11);
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    // Add all restaurant markers
+    addMarkers(restaurantData);
+}
+
+function addMarkers(restaurants) {
+    // Clear existing markers
+    markers.forEach(marker => map.removeLayer(marker));
+    markers = [];
+
+    // Add new markers
+    restaurants.forEach(restaurant => {
+        // Create custom icon based on rating
+        const iconColor = getIconColor(restaurant.rating);
+        const icon = L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="background-color: ${iconColor}; width: 35px; height: 35px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; font-size: 13px;">${restaurant.vote}</div>`,
+            iconSize: [35, 35],
+            iconAnchor: [17, 17]
+        });
+
+        // Create marker
+        const marker = L.marker([restaurant.lat, restaurant.lng], { icon: icon })
+            .addTo(map)
+            .bindPopup(createPopupContent(restaurant));
+
+        // Add click event to marker
+        marker.on('click', function() {
+            highlightRestaurant(restaurant.id);
+        });
+
+        markers.push(marker);
+    });
+}
+
+function getIconColor(rating) {
+    if (rating >= 4.8) return '#2f9e44'; // Green for 10 or 9+
+    if (rating >= 4.5) return '#1971c2'; // Blue for 9-
+    if (rating >= 4.0) return '#f59e0b'; // Orange for 8+
+    return '#e03131'; // Red for lower
+}
+
+function createPopupContent(restaurant) {
+    const stars = '⭐'.repeat(Math.round(restaurant.rating));
+
+    return `
+        <div class="custom-popup" style="min-width: 280px;">
+            <div style="display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; background: #c92a2a; color: white; border-radius: 15px; font-size: 0.85em; font-weight: 600; margin-bottom: 10px;">
+                📺 Franchino er criminale
+            </div>
+            <h3 style="color: #c92a2a; margin-bottom: 10px; font-size: 1.3em;">${restaurant.name}</h3>
+            <div style="color: #ffc107; font-size: 1.1em; margin: 5px 0;">
+                ${stars} <strong style="color: #c92a2a; font-size: 1.2em;">VOTO: ${restaurant.vote}</strong>
+            </div>
+            <p style="margin: 5px 0; color: #6c757d;"><strong>Tipo:</strong> ${restaurant.cuisine}</p>
+            <p style="margin: 5px 0; color: #6c757d;"><strong>Prezzo:</strong> ${restaurant.priceRange}</p>
+            <p style="margin: 5px 0; color: #6c757d;"><strong>Speso:</strong> ${restaurant.totalSpent}</p>
+            <p style="margin: 5px 0; color: #6c757d;"><strong>📍</strong> ${restaurant.address}</p>
+            <div style="margin: 10px 0; color: #495057; line-height: 1.5; max-height: 120px; overflow-y: auto; font-size: 0.9em;">
+                <strong>Recensione:</strong> ${restaurant.summary.substring(0, 200)}...
+            </div>
+            <div style="margin-top: 10px;">
+                <strong style="color: #495057; font-size: 0.9em;">Highlights:</strong><br>
+                ${restaurant.highlights.slice(0, 3).map(h => `<span style="display: inline-block; padding: 3px 10px; background: #fff3e0; border-radius: 10px; font-size: 0.75em; margin: 3px;">${h}</span>`).join('')}
+            </div>
+        </div>
+    `;
+}
+
+function displayStats() {
+    const stats = calculateStats();
+    document.getElementById('totalRestaurants').textContent = stats.total;
+    document.getElementById('avgRating').textContent = stats.avgRating + ' ⭐';
+    document.getElementById('totalReviews').textContent = stats.totalReviews;
+}
+
+function displayRestaurants(restaurants) {
+    const listContainer = document.getElementById('restaurantList');
+
+    if (restaurants.length === 0) {
+        listContainer.innerHTML = '<div class="loading">Nessun posto trovato.</div>';
+        return;
+    }
+
+    listContainer.innerHTML = restaurants.map(restaurant => `
+        <div class="restaurant-card" data-id="${restaurant.id}" onclick="focusOnRestaurant(${restaurant.id})">
+            <div class="youtuber-badge">📺 Franchino er criminale</div>
+            <h3>${restaurant.name} <span class="vote-badge">VOTO ${restaurant.vote}</span></h3>
+            <div class="rating">
+                <span class="stars">${'⭐'.repeat(Math.round(restaurant.rating))}</span>
+                <span class="rating-value">${restaurant.rating}/5.0</span>
+            </div>
+            <div>
+                <span class="cuisine-tag">${restaurant.cuisine}</span>
+                <span class="cuisine-tag">${restaurant.priceRange}</span>
+                <span class="spent-badge">Speso: ${restaurant.totalSpent}</span>
+            </div>
+            <div class="summary">
+                <strong>📍</strong> ${restaurant.address}<br>
+                <strong>📅</strong> ${new Date(restaurant.reviewDate).toLocaleDateString('it-IT', { year: 'numeric', month: 'long', day: 'numeric' })}<br><br>
+                ${restaurant.summary}
+            </div>
+            <div style="margin-top: 10px;">
+                ${restaurant.highlights.map(h => `<span class="cuisine-tag">${h}</span>`).join('')}
+            </div>
+            <div class="details-section">
+                <h4>🍕 Prodotti Assaggiati:</h4>
+                <ul>
+                    ${restaurant.itemsReviewed.slice(0, 5).map(item => `<li>${item}</li>`).join('')}
+                    ${restaurant.itemsReviewed.length > 5 ? `<li><em>...e altro ancora</em></li>` : ''}
+                </ul>
+            </div>
+        </div>
+    `).join('');
+}
+
+function focusOnRestaurant(id) {
+    const restaurant = restaurantData.find(r => r.id === id);
+    if (restaurant) {
+        // Pan and zoom to restaurant
+        map.setView([restaurant.lat, restaurant.lng], 15);
+
+        // Find and open the marker popup
+        const marker = markers.find(m => {
+            const latlng = m.getLatLng();
+            return latlng.lat === restaurant.lat && latlng.lng === restaurant.lng;
+        });
+
+        if (marker) {
+            marker.openPopup();
+        }
+
+        highlightRestaurant(id);
+    }
+}
+
+function highlightRestaurant(id) {
+    // Remove previous highlights
+    document.querySelectorAll('.restaurant-card').forEach(card => {
+        card.style.borderColor = 'transparent';
+    });
+
+    // Highlight selected card
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (card) {
+        card.style.borderColor = '#c92a2a';
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+function setupEventListeners() {
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', function(e) {
+        searchTerm = e.target.value.toLowerCase();
+        filterRestaurants();
+    });
+
+    // Filter buttons
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Update active state
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+
+            // Update filter
+            currentFilter = this.getAttribute('data-cuisine');
+            filterRestaurants();
+        });
+    });
+}
+
+function filterRestaurants() {
+    let filtered = restaurantData;
+
+    // Apply cuisine filter
+    if (currentFilter !== 'all') {
+        filtered = filtered.filter(r => r.cuisine === currentFilter);
+    }
+
+    // Apply search filter
+    if (searchTerm) {
+        filtered = filtered.filter(r =>
+            r.name.toLowerCase().includes(searchTerm) ||
+            r.cuisine.toLowerCase().includes(searchTerm) ||
+            r.summary.toLowerCase().includes(searchTerm) ||
+            r.highlights.some(h => h.toLowerCase().includes(searchTerm)) ||
+            r.address.toLowerCase().includes(searchTerm) ||
+            r.itemsReviewed.some(item => item.toLowerCase().includes(searchTerm))
+        );
+    }
+
+    // Update display
+    displayRestaurants(filtered);
+    addMarkers(filtered);
+
+    // Update stats for filtered results
+    if (filtered.length > 0) {
+        const avgRating = (filtered.reduce((sum, r) => sum + r.rating, 0) / filtered.length).toFixed(1);
+        document.getElementById('totalRestaurants').textContent = filtered.length;
+        document.getElementById('avgRating').textContent = avgRating + ' ⭐';
+        document.getElementById('totalReviews').textContent = filtered.length;
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Focus search on Ctrl/Cmd + F
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        document.getElementById('searchInput').focus();
+    }
+});
+    </script>
+</body>
+</html>
