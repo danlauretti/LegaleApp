@@ -5,3 +5,6 @@ langchain
 unstructured
 unstructured[local-inference]
 streamlit
+numpy
+pandas
+openpyxl
